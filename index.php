@@ -22,15 +22,3 @@ $admin = new Rol('admin');
 $visitante = new Rol('visitante');
 
 $accion = 'borrar';
-
-try {
-    new Autorizacion($admin, $permisosPorRol, $accion);
-} catch (\Throwable $th) {
-    echo '<h1>El admin no tiene autorización para '.$accion.'</h1>';
-}
-
-try {
-    new Autorizacion($visitante, $permisosPorRol, $accion);
-} catch (\Throwable $th) {
-    echo '<h1>El visitante no tiene autorización para '.$accion.'</h1>';
-}
