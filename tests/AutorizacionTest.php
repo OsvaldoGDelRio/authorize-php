@@ -3,6 +3,7 @@ namespace tests;
 
 use PHPUnit\Framework\TestCase;
 use src\Autorizacion;
+use src\CrearAutorizacion;
 use src\excepciones\ElRolNoExisteEnLosDatosDeVerificacionException;
 use src\excepciones\LosDatosParaVerificarAutorizacionEstanVaciosException;
 use src\excepciones\NoTieneAutorizacionException;
@@ -54,7 +55,7 @@ class AutorizacionTest extends TestCase
         $this->assertSame('hola', $aut->rol());
     }
 
-    public function testAurotizacionDevuelveExcepcionSiElRecursoSolicitadoEstaVacio()
+    public function testAutorizacionDevuelveExcepcionSiElRecursoSolicitadoEstaVacio()
     {
         $this->expectException(RecursoSolicitadoVacioException::class);
         $aut = new Autorizacion(
@@ -64,14 +65,17 @@ class AutorizacionTest extends TestCase
         );
     }
 
-    public function testCrearRolDevuelveAutorizacion()
+    public function testCrearAutorizacionDevuelveAutorizacion()
     {
-        $aut = new Autorizacion(
-            new Rol('hola'),
-            ['hola' => ['inicio']],
-            'inicio'
-        );
-
-        $this->assertInstanceOf(Autorizacion::class, $aut);
+        $aut = new CrearAutorizacion();
+        $this->assertInstanceOf(Autorizacion::class, $aut->crear([
+            'rol' => 'admin',
+            'datosVerificar' => [
+                'admin' => [
+                    'leer'
+                ]
+            ],
+            'recursoSolicitado' => 'leer'
+        ]));
     }
 }
