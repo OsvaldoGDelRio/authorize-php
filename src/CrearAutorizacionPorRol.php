@@ -11,9 +11,11 @@ class CrearAutorizacionPorRol implements FactoryClassInterface
     public function crear(array $array): Autorizacion
     {
         return new Autorizacion(
-            new VerificarPorRol($array['datosVerificar']),
+            new VerificarPorRol(
+                new DatosDeConfiguracion($array['datosVerificar'])
+            ),
             new Rol($array['rol']),
-            $array['recursoSolicitado']
+            new RecursoSolicitado($array['recursoSolicitado'])
         );
     }
 }

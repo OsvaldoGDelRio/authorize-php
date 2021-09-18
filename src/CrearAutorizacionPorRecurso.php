@@ -11,9 +11,11 @@ class CrearAutorizacionPorRecurso implements FactoryClassInterface
     public function crear(array $array): Autorizacion
     {
         return new Autorizacion(
-            new VerificarPorRecurso($array['datosVerificar']),
+            new VerificarPorRecurso(
+                new DatosDeConfiguracion($array['datosVerificar'])
+            ),
             new Rol($array['rol']),
-            $array['recursoSolicitado']
+            new RecursoSolicitado($array['recursoSolicitado'])
         );
     }
 }

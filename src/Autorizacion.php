@@ -1,9 +1,8 @@
 <?php
 namespace src;
 
-use src\excepciones\RecursoSolicitadoVacioException;
-
 use src\interfaces\VerificarPermisosInterface;
+use src\RecursoSolicitado;
 
 class Autorizacion
 {
@@ -13,13 +12,13 @@ class Autorizacion
     public function __construct(
         VerificarPermisosInterface $verificarPermisosInterface,
         Rol $rol,
-        string $recursoSolicitado
+        RecursoSolicitado $recursoSolicitado
     ) {
         $this->_rol = $rol;
         
-        $this->_recursoSolicitado = $this->setRecursoSolicitado($recursoSolicitado);
+        $this->_recursoSolicitado = $recursoSolicitado->recursoSolicitado();
 
-        $verificarPermisosInterface->verificar($this->_rol->rol(), $this->_recursoSolicitado);
+        $verificarPermisosInterface->verificar($this->_rol->rol(), $recursoSolicitado->recursoSolicitado());
     }
 
     public function rol(): string
@@ -30,14 +29,5 @@ class Autorizacion
     public function recursoSolicitado(): string
     {
         return $this->_recursoSolicitado;
-    }
-
-    private function setRecursoSolicitado(string $string): string
-    {
-        if (empty($string)) {
-            throw new RecursoSolicitadoVacioException("El recurso que se solicita no puede estar vacío");
-        }
-
-        return $string;
     }
 }

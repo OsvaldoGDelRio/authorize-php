@@ -3,39 +3,42 @@ namespace tests;
 
 use PHPUnit\Framework\TestCase;
 use src\Autorizacion;
+use src\CrearAutorizacionPorRecurso;
+use src\CrearAutorizacionPorRol;
+use src\DatosDeConfiguracion;
 use src\excepciones\ElRecursoNoExisteEnLosDatosDeVerificacionException;
 use src\excepciones\ElRolNoExisteEnLosDatosDeVerificacionException;
 use src\excepciones\ElRolNoPuedeEstarVacioException;
 use src\excepciones\LosDatosParaVerificarAutorizacionEstanVaciosException;
 use src\excepciones\NoTieneAutorizacionException;
 use src\excepciones\RecursoSolicitadoVacioException;
+use src\RecursoSolicitado;
 use src\Rol;
 use src\VerificarPorRecurso;
 use src\VerificarPorRol;
 
 class AutorizacionTest extends TestCase
 {
-
     public function setUp(): void
     {
         $this->aut = new Autorizacion(
-            new VerificarPorRol(['admin' => ['leer']]),
+            new VerificarPorRol(
+                new DatosDeConfiguracion(['admin' => ['leer']])
+            ),
             new Rol('admin'),
-            'leer'
+            new RecursoSolicitado('leer')
+        );
+
+        $this->autRecurso = new Autorizacion(
+            new VerificarPorRecurso(
+                new DatosDeConfiguracion(['leer' => ['admin']])
+            ),
+            new Rol('admin'),
+            new RecursoSolicitado('leer')
         );
     }
 
     //Autorizacion
-
-    public function testAutorizacionelRecusonoPuedeEstarVacio()
-    {
-        $this->expectException(RecursoSolicitadoVacioException::class);
-        $aut = new Autorizacion(
-            new VerificarPorRol(['admin' => 'leer']),
-            new Rol('admin'),
-            ''
-        );
-    }
 
     public function testAutorizacionDevuelveRolCorrecto()
     {
@@ -47,65 +50,121 @@ class AutorizacionTest extends TestCase
         $this->assertSame('leer', $this->aut->recursoSolicitado());
     }
 
-    //Rol
+    //DatosDeConfiguracion
 
-    public function testRolNoPuedeEstarVacio()
+    public function testDatosDeConfiguracionNoPuedeEstarVacio()
     {
-        $this->expectException(ElRolNoPuedeEstarVacioException::class);
-        $rol = new Rol('');
+        $this->expectException(LosDatosParaVerificarAutorizacionEstanVaciosException::class);
+        $d = new DatosDeConfiguracion([]);
     }
 
-    public function testRolDevuelveRolCorrecto()
+    public function testDatosDeConfiguracionDevuelveArraySiEsCorrecto()
     {
-        $rol = new Rol('admin');
-        $this->assertSame('admin', $rol->rol());
+        $d = new DatosDeConfiguracion(['admin' => ['leer']]);
+        $this->assertIsArray($d->datos());
+    }
+
+    //RecursoSolicitado
+
+    public function testRecursoSolicitadoDeVuelveExcepcionSiEstaVacio()
+    {
+        $this->expectException(RecursoSolicitadoVacioException::class);
+        $r = new RecursoSolicitado('');
+    }
+
+    public function testRecursoSolicitadoDeVuelveStringCorrecto()
+    {
+        $r = new RecursoSolicitado('leer');
+        $this->assertSame('leer', $r->recursoSolicitado());
+    }
+
+    //Rol
+
+    public function testElRolNoPuedeEstarVacio()
+    {
+        $this->expectException(ElRolNoPuedeEstarVacioException::class);
+        $r = new Rol('');
+    }
+
+    public function testRolDevuelveStringCorrecto()
+    {
+        $r = new Rol('admin');
+        $this->assertSame('admin', $r->rol());
     }
 
     //VerificarPorRecurso
 
-    public function testVerificarPorRecursoDatosNoPuedeEstarVacio()
-    {
-        $this->expectException(LosDatosParaVerificarAutorizacionEstanVaciosException::class);
-        $ver = new VerificarPorRecurso([]);
-    }
-
-    public function testNoTieneAutorizacionPorRecurso()
+    public function testVerificarPorRecursoDevuelveExcepcionSiNoHayAutorizacion()
     {
         $this->expectException(NoTieneAutorizacionException::class);
-        $ver = new VerificarPorRecurso(['leer' => ['admin']]);
-        $ver->verificar('visitante', 'leer');
+        $v = new VerificarPorRecurso(
+            new DatosDeConfiguracion(['leer' => ['admin']])
+        );
+
+        $v->verificar('invitado', 'leer');
     }
 
-    public function testElRecursoNoEstaEspecificadoEnLosDatos()
+    public function testVerificarPorRecursoDevuelveExcepcionSiNoExisteElRecurso()
     {
         $this->expectException(ElRecursoNoExisteEnLosDatosDeVerificacionException::class);
-        $ver = new VerificarPorRecurso(['leer' => ['admin']]);
-        $ver->verificar('visitante', 'escribir');
+        $v = new VerificarPorRecurso(
+            new DatosDeConfiguracion(['leer' => ['admin']])
+        );
+
+        $v->verificar('admin', 'esribir');
     }
 
-    
+    //VerificaPorRol
 
-    //VerificarPorRol
-
-    public function testVerificarPorRolDatosNoPuedeEstarVacio()
-    {
-        $this->expectException(LosDatosParaVerificarAutorizacionEstanVaciosException::class);
-        $ver = new VerificarPorRol([]);
-    }
-
-    public function testNoTieneAutorizacionPorRol()
+    public function testVerificarPorRolDevuelveExcepcionSiNoHayAutorizacion()
     {
         $this->expectException(NoTieneAutorizacionException::class);
-        $ver = new VerificarPorRol(['admin' => ['leer']]);
-        $ver->verificar('admin', 'escribir');
+        $v = new VerificarPorRol(
+            new DatosDeConfiguracion(['admin' => ['leer']])
+        );
+
+        $v->verificar('admin', 'escribir');
     }
 
-    public function testElRolNoEstaEspecificadoEnLosDatos()
+    public function testVerificarPorRolDevuelveExcepcionSiElRolNoExisteEnLaConfiguracion()
     {
         $this->expectException(ElRolNoExisteEnLosDatosDeVerificacionException::class);
-        $ver = new VerificarPorRol(['visitante' => ['leer']]);
-        $ver->verificar('admin', 'escribir');
+        $v = new VerificarPorRol(
+            new DatosDeConfiguracion(['admin' => ['leer']])
+        );
+
+        $v->verificar('visitante', 'escribir');
     }
 
-    
+    //CrearAutorizacionPorRecurso
+
+    public function testCrearAutorizacionPorRecursoDevuelveObjetoCorrecto()
+    {
+        $aut = new CrearAutorizacionPorRecurso();
+        $this->assertInstanceOf(Autorizacion::class, $aut->crear([
+            'rol' => 'admin',
+            'datosVerificar' => [
+                'leer' => [
+                    'admin'
+                ]
+            ],
+            'recursoSolicitado' => 'leer'
+        ]));
+    }
+
+    //CrearAutorizacionPorRol
+
+    public function testCrearAutorizacionPorRolDevuelveObjetoCorrecto()
+    {
+        $aut = new CrearAutorizacionPorRol();
+        $this->assertInstanceOf(Autorizacion::class, $aut->crear([
+            'rol' => 'admin',
+            'datosVerificar' => [
+                'admin' => [
+                    'leer'
+                ]
+            ],
+            'recursoSolicitado' => 'leer'
+        ]));
+    }
 }
